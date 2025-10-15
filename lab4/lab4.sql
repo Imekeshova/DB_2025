@@ -5,8 +5,8 @@ DROP TABLE IF EXISTS assignments CASCADE;
 
 
 ------------LABWORK4---------------
-CREATE TABLE employees (
-    employee_id SERIAL PRIMARY KEY,
+CREATE TABLE accounts (
+    account_id SERIAL PRIMARY KEY,
     first_name VARCHAR(50),
     last_name VARCHAR(50),
     department VARCHAR(50),
@@ -326,4 +326,123 @@ SELECT
 FROM employees
 GROUP BY department
 ORDER BY department;
+
+
+
+-- Task A1
+SELECT
+    UPPER(account_holder) AS account_holder_upper,
+    SUBSTRING(branch_code FROM 1 FOR 5) AS branch_prefix,
+    account_type || ' - ' || status AS account_status
+FROM accounts;
+
+-- Task A2
+SELECT
+    account_id,
+    account_holder,
+    CASE
+        WHEN balance > 100000 THEN 'High Value'
+        WHEN balance BETWEEN 10000 AND 100000 THEN 'Medium Value'
+        ELSE 'Low Value'
+    END AS value_category
+FROM accounts;
+
+-- Task A3
+SELECT *
+FROM accounts
+WHERE LOWER(account_holder) LIKE '%a%';
+
+-- Task B1
+SELECT *
+FROM transactions
+WHERE amount BETWEEN 500 AND 5000
+  AND transaction_type = 'Withdrawal';
+
+-- Task B2
+SELECT
+    account_id,
+    account_holder,
+    balance,
+    balance * 1.025 AS balance_with_interest
+FROM accounts
+WHERE account_type = 'Savings';
+
+-- Task B3
+SELECT *
+FROM branches
+WHERE employee_count > 10
+   OR city = 'New York';
+
+-- Task B4
+SELECT *
+FROM transactions
+WHERE description IS NULL
+   OR description = '';
+
+-- Task C1
+SELECT
+    account_id,
+    SUM(amount) AS total_amount
+FROM transactions
+GROUP BY account_id;
+
+-- Task C2
+SELECT
+    branch_code,
+    COUNT(*) AS total_accounts
+FROM accounts
+GROUP BY branch_code
+HAVING COUNT(*) > 5;
+
+-- Task C3
+SELECT
+    account_type,
+    AVG(balance) AS avg_balance
+FROM accounts
+GROUP BY account_type;
+
+-- Task C4
+SELECT
+    transaction_date,
+    SUM(amount) AS total_deposits
+FROM transactions
+WHERE transaction_type = 'Deposit'
+GROUP BY transaction_date;
+
+-- Task D1
+SELECT *
+FROM accounts a
+WHERE EXISTS (
+    SELECT 1
+    FROM transactions t
+    WHERE t.account_id = a.account_id
+);
+
+-- Task D2
+SELECT *
+FROM accounts
+WHERE balance > ANY (
+    SELECT balance
+    FROM accounts
+    WHERE branch_code = 'BR001'
+);
+
+NSERT INTO branches (branch_code, branch_name, city, manager_name, employee_count) VALUES
+('BR01', 'Central Branch', 'Almaty', 'Aruzhan K.', 20),
+('BR02', 'North Branch', 'Astana', 'Dias B.', 15),
+('BR03', 'South Branch', 'Shymkent', 'Alisher N.', 10);
+
+INSERT INTO accounts (account_holder, account_type, balance, opening_date, branch_code, status) VALUES
+('John Smith', 'Savings', 1500.50, '2022-01-10', 'BR01', 'Active'),
+('Sarah Johnson', 'Checking', 2300.00, '2021-11-20', 'BR01', 'Active'),
+('Michael Brown', 'Savings', 500.00, '2023-02-15', 'BR02', 'Inactive'),
+('Emily Davis', 'Checking', 10000.00, '2020-08-05', 'BR03', 'Active');
+
+INSERT INTO transactions (account_id, transaction_date, amount, transaction_type, description) VALUES
+(1, '2024-01-15', 200.00, 'Deposit', 'Monthly deposit'),
+(1, '2024-02-15', -50.00, 'Withdrawal', 'ATM withdrawal'),
+(2, '2024-03-01', -100.00, 'Withdrawal', 'Online payment'),
+(3, '2024-04-10', 300.00, 'Deposit', 'Salary deposit'),
+(4, '2024-05-12', -500.00, 'Withdrawal', 'Rent payment');
+
 
