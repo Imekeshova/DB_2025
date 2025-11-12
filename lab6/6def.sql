@@ -267,16 +267,54 @@ HAVING AVG(e.salary) > 50000;
 
 
 
---TASK 1--
-SELECT e.emp_name, e.salary
+--DEF
+--1 TASK
+SELECT e.emp_name, e.salary, d.location
 FROM employees e
-WHERE e.dept_id IS NULL
-UNION ALL
-SELECT p.project_name, p.budget
-FROM projects p
-WHERE p.dept_id IS NULL;
+INNER JOIN departments d ON e.dept_id = d.dept_id
+WHERE d.dept_name = 'IT';
 
 --TASK 2
+SELECT d.dept_name, COUNT(p.project_id) AS project_count
+FROM departments d
+LEFT JOIN projects p ON d.dept_id = p.dept_id
+GROUP BY d.dept_id, d.dept_name;
+
+--TASK 2
+SELECT d.dept_name, COUNT(p.project_id) AS project_count
+FROM departments d
+LEFT JOIN projects p ON d.dept_id = p.dept_id
+GROUP BY d.dept_id, d.dept_name;
+
+--TASK 3
+SELECT p.project_name, p.budget
+FROM projects p
+WHERE dept_id IS NULL;
+
+--TASK 4
+SELECT e.emp_name, p.project_name, p.budget
+FROM employees e
+INNER JOIN departments d ON e.dept_id = d.dept_id
+INNER JOIN projects p ON d.dept_id = p.dept_id
+WHERE d.dept_name = 'IT';
+
+--TASK 5
+SELECT d.dept_name,  SUM(p.budget) AS total_budget
+FROM departments d
+INNER JOIN projects p ON d.dept_id = p.dept_id
+GROUP BY d.dept_id, d.dept_name
+HAVING SUM(p.budget) > 10000;
+
+
+
+--TASK 4--
+SELECT e.emp_name, d.dept_name, p.project_name
+FROM employees e
+INNER JOIN departments d ON e.dept_id = d.dept_id
+INNER JOIN projects p ON d.dept_id = p.dept_id;
+
+
+--TASK 2--
 SELECT d.dept_name,
        COUNT(e.emp_id) AS employee_count,
        COUNT(p.project_id) AS project_count
@@ -285,38 +323,30 @@ LEFT JOIN employees e ON d.dept_id = e.dept_id
 LEFT JOIN projects p ON d.dept_id = p.dept_id
 GROUP BY d.dept_name;
 
-
---TASK 4
-SELECT e.emp_name, d.dept_name, p.project_name
-FROM employees e
-INNER JOIN departments d ON e.dept_id = d.dept_id
-INNER JOIN projects p ON d.dept_id = p.dept_id;
-
----TASK 3
+--TASK 3--
 SELECT d.dept_name,
        SUM(e.salary) AS total_salaries,
        SUM(p.budget) AS total_budgets
-CASE
-
-
-
 FROM departments d
-INNER JOIN employees e ON d.dept_id = e.dept_id
-INNER  JOIN projects p ON d.dept_id = p.dept_id
+LEFT JOIN employees e ON d.dept_id = e.dept_id
+LEFT JOIN projects p ON d.dept_id = p.dept_id
 GROUP BY d.dept_name;
 
-
---TASK 5
+--TASK 5--
 SELECT d.dept_name,
        COUNT(e.emp_id) AS emp_count,
        COUNT(p.project_id) AS proj_count,
-    CASE
-        WHEN
-    END AS
-FROM department d
-       LEFT JOIN employees e ON d.dept_id = e.dept_id
-       LEFT JOIN projects p ON d.dept_id = p.dept_id
+       CASE
+         WHEN COUNT(e.emp_id) = 0 AND COUNT(p.project_id) = 0 THEN 'Empty'
+         WHEN COUNT(e.emp_id) = 0 THEN 'Needs Employees'
+         WHEN COUNT(p.project_id) = 0 THEN 'Needs Projects'
+         ELSE 'Active'
+       END AS status
+FROM departments d
+LEFT JOIN employees e ON d.dept_id = e.dept_id
+LEFT JOIN projects p ON d.dept_id = p.dept_id
 GROUP BY d.dept_name;
+
 
 
 
