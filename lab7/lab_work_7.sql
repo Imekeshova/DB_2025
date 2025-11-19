@@ -80,7 +80,6 @@ GROUP BY d.dept_id, d.dept_name;
 --TEST 2.2---
 SELECT * FROM dept_statistics ORDER BY employee_count DESC;
 
-
 --TASK 2.3---
 CREATE OR REPLACE VIEW project_overview AS
 SELECT
@@ -496,6 +495,134 @@ GRANT analyst_role TO bob;
 DROP ROLE IF EXISTS charlie;
 CREATE ROLE charlie WITH LOGIN PASSWORD 'charlie123';
 GRANT manager_role TO charlie;
+
+---TASK1---
+CREATE OR REPLACE VIEW employee_directory AS
+SELECT
+    e.emp_name,
+    d.dept_name,
+    d.location,
+    e.salary,
+    CASE
+        WHEN e.salary > 55000 THEN 'High Earner'
+        ELSE 'Standard'
+    END AS status
+FROM employees e
+JOIN departments d ON e.dept_id = d.dept_id
+ORDER BY d.dept_name, e.emp_name;
+
+--TEST 1---
+SELECT * FROM employee_directory ORDER BY dept_name;
+
+--TASK 2---
+CREATE OR REPLACE VIEW project_summary AS
+SELECT
+    p.project_name,
+    p.budget,
+    d.dept_name,
+    d.location,
+    CASE
+        WHEN p.budget > 80000 THEN 'Large'
+        WHEN p.budget > 50000 THEN 'Medium'
+        ELSE 'Small'
+    END AS project_size
+FROM projects p
+LEFT JOIN departments d ON p.dept_id = d.dept_id;
+
+---TASK 3.1--
+DROP VIEW IF EXISTS employee_directory;
+
+----------------------------------------
+CREATE VIEW employee_directory AS
+SELECT
+    e.emp_name,
+    d.dept_name,
+    d.location,
+    e.salary,
+    CASE
+        WHEN e.salary > 55000 THEN 'High Earner'
+        ELSE 'Standard'
+    END AS status,
+    CASE
+        WHEN d.dept_name ILIKE '%IT%' OR d.dept_name ILIKE '%Development%' THEN 'Technical'
+        ELSE 'Non-Technical'
+    END AS dept_category
+FROM employees e
+JOIN departments d ON e.dept_id = d.dept_id
+ORDER BY d.dept_name, e.emp_name;
+
+
+---TEST 2--
+SELECT * FROM project_summary WHERE project_size = 'Large';
+
+DROP VIEW IF EXISTS project_overview;
+
+---TASK 3.2--
+ALTER VIEW project_summary RENAME TO  project_overview;
+
+--TASK  3.3---
+DROP VIEW IF EXISTS project_overview;
+
+---TASK 4---
+DROP MATERIALIZED VIEW IF EXISTS dept_summary;
+CREATE MATERIALIZED VIEW dept_summary AS
+SELECT
+    d.dept_name,
+    COUNT(e.emp_id) AS employee_count,
+    COUNT(p.project_id) AS project_count,
+    COALESCE(SUM(p.budget), 0) AS total_budget
+FROM departments d
+LEFT JOIN employees e ON d.dept_id = e.dept_id
+LEFT JOIN projects p ON d.dept_id = p.dept_id
+GROUP BY d.dept_name
+WITH DATA;
+
+REFRESH MATERIALIZED VIEW dept_summary;
+
+
+--TASK 5
+DROP ROLE IF EXISTS viewer_role;
+DROP ROLE IF EXISTS editor_role;
+
+CREATE ROLE viewer_role NOLOGIN;
+CREATE ROLE editor_role NOLOGIN;
+
+
+GRANT SELECT ON employee_directory TO viewer_role;
+GRANT SELECT ON departments TO viewer_role;
+
+GRANT SELECT ON employees, departments, projects TO editor_role;
+GRANT INSERT, UPDATE ON employees to editor_role;
+
+-----2----
+DROP ROLE IF EXISTS manager_role;
+CREATE ROLE manager_role NOLOGIN;
+GRANT editor_role TO manager_role;
+GRANT DELETE ON employees TO manager_role;
+GRANT UPDATE ON projects TO manager_role;
+
+----3----users
+DROP ROLE IF EXISTS alice_viewer;
+DROP ROLE IF EXISTS bob_editor;
+DROP ROLE IF EXISTS carol_manager;
+
+
+CREATE ROLE alice_viewer WITH LOGIN PASSWORD 'view123';
+CREATE ROLE bob_editor WITH LOGIN PASSWORD 'edit456';
+CREATE ROLE carol_manager WITH LOGIN PASSWORD 'mgr789';
+
+GRANT viewer_role TO alice_viewer;
+GRANT editor_role TO bob_editor;
+GRANT manager_role TO carol_manager;
+
+-- SELECT rolname, rolcanlogin FROM pg_roles
+-- WHERE rolname LIKE '%_role' OR rolname LIKE '%_viewer'
+--  OR rolname LIKE '%_editor' OR rolname LIKE '%_manager'
+-- ORDER BY rolname;
+
+
+
+
 
 
 
