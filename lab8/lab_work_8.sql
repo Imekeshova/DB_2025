@@ -335,3 +335,27 @@ CREATE INDEX IF NOT EXISTS emp_salary_covering_idx
 ON employees (salary) INCLUDE (emp_name, dept_id);
 
 
+
+-- Task 1: Optimize User Watch History
+CREATE INDEX idx_watch_history_user_watch_date ON watch_history (user_id, watch_date DESC);
+
+
+-- Task 2: Expression Index for Search
+CREATE INDEX idx_videos_title_normalized ON videos (lower(trim(title)));
+
+-- SELECT that would utilize this index
+SELECT video_id, title
+FROM videos
+WHERE lower(trim(title)) = 'some title';
+
+
+-- Task 3: Drop redundant index
+DROP INDEX IF EXISTS wh_user_idx;
+
+
+
+-- Task 4: Partial index for completed views
+CREATE INDEX idx_wh_completed_user_video_date ON watch_history (user_id, video_id, watch_date)
+WHERE completed = TRUE;
+
+
